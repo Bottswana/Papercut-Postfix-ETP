@@ -14,9 +14,13 @@ Ensure the system as PHP 7 or greater installed. No other dependencies are requi
 > **Note:** The following instructions will redirect an **Entire Domain** to the load balancing script. This is intended when a specific domain is being used for Email to Print. If you wish to only redirect a specific mailbox, you will need to adjust the Postfix configuration appropriately.
 
 - Create a local user that will hold the mailbox for PaperCut to connect to. In this example, we will use 'etpmailbox':
+
 `adduser etpmailbox`
+
 - Place the PHP script in the users home directory. In this example, the path to the script will be:
+
 `/home/etpmailbox/handler.php`
+
 - Modify `/etc/postfix/master.cf` to enable our script as a mail handler:
 ```
 # ====================================================================
@@ -35,13 +39,22 @@ emailprint unix  -       n       n       -       -       pipe
   flags=FR user=etpmailbox argv=/home/etpmailbox/handler.php ${sender} ${size} ${recipient}
 ```
 - Modify `/etc/postfix/main.cf` as per the comment from master.cf above:
+
 `emailprint_destination_recipient_limit=1`
+
 - Modify `/etc/postfix/transport` to redirect email from our ETP domain to our new mail handler:
+
 `your-etp-domain.co.uk		emailprint`
+
 - Generate/Regenerate transport.db:
+
 `postmap /etc/postfix/transport`
+
 - Restart the Postfix service to reload the configuration changes:
+
 `systemctl restart postfix`
+
 - Add the Email-To-Print user to the mail group so it can append to the spool files:
+
 `adduser etpmailbox mail`
 
