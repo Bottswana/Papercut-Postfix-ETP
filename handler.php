@@ -42,6 +42,7 @@ $mailbox = "/var/mail/etpmailbox";
 // Error Handling
 function error_handler($errno, $errstr, $errfile, $errline)
 {
+    if(!(error_reporting() & $errno)) return false;
 
     // Log the error in a panic file
     try
@@ -159,18 +160,21 @@ else
 }
 
 // Get the next round-robin entry
-$tmp_file = fopen("/tmp/emailtoprint.tmp", "w+");
-$current_position = intval(fread($tmp_file, 10));
+$indexing_file_path = "/home/cop28etp/.indexer";
+
+$current_position = 0;
+$current_position_file = @file_get_contents($indexing_file_path, false);
+if( $current_position_file !== false )
+{
+	$current_position = intval($current_position_file);
+}
+
 fwrite($log_file, "Current position is: ".$current_position."\n");
 
-// Update the file with the next entry
-$new_position = ($current_position >= (count($desired_to)-1)) ? 1 : $current_position + 1;
+// Calculate the next entry
+$new_position = ($current_position >= (count($desired_to)-1)) ? 0 : $current_position + 1;
 fwrite($log_file, "New position is: ".$new_position."\n");
-ftruncate($tmp_file, 0);
-rewind($tmp_file);
-
-fwrite($tmp_file, $new_position);
-fclose($tmp_file);
+@file_put_contents($indexing_file_path, $new_position);
 
 // Update the To header
 $this_address = $desired_to[$current_position];
